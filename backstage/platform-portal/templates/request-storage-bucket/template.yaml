@@ -1,0 +1,84 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: request-storage-bucket
+  title: Request Storage Bucket
+  description: Solicita la creación de un bucket seguro usando la Platform API
+spec:
+  owner: group:default/platform-team
+  type: service
+
+  parameters:
+    - title: Request data
+      required:
+        - service_name
+        - team
+        - environment
+        - bucket_name
+        - region
+      properties:
+        service_name:
+          title: Service name
+          type: string
+        team:
+          title: Team
+          type: string
+        environment:
+          title: Environment
+          type: string
+          enum: [qa, stg, prod]
+        bucket_name:
+          title: Bucket name
+          type: string
+          description: 'Sufijo del bucket. El nombre final será: {service_name}-{environment}-{bucket_name}'
+        region:
+          title: Region
+          type: string
+          enum: [us-east-1, us-east-2]
+        versioning:
+          title: Versioning
+          type: boolean
+          default: true
+        encryption:
+          title: Encryption
+          type: string
+          enum: [AES256, 'aws:kms']
+          default: AES256
+        public_access:
+          title: Public access
+          type: boolean
+          default: false
+        tags:
+          title: Tags adicionales
+          type: array
+          description: 'Tags adicionales en formato key:value. Los tags service, team y environment se agregan automáticamente.'
+          items:
+            type: string
+          default: []
+
+  steps:
+    - id: submitRequest
+      name: Submit platform request
+      action: company:platformRequest:create
+      input:
+        request_type: storage_bucket
+        service_name: ${{ parameters.service_name }}
+        team: ${{ parameters.team }}
+        environment: ${{ parameters.environment }}
+        requested_by: ${{ user.entity.metadata.name | default("backstage-local-user", true) }}
+        spec:
+          bucket_name: ${{ parameters.service_name }}-${{ parameters.environment }}-${{ parameters.bucket_name }}
+          region: ${{ parameters.region }}
+          versioning: ${{ parameters.versioning }}
+          encryption: ${{ parameters.encryption }}
+          public_access: ${{ parameters.public_access }}
+          tags: ${{ parameters.tags }}
+
+  output:
+    text:
+      - title: Request ID
+        content: ${{ steps.submitRequest.output.request_id }}
+      - title: Status
+        content: ${{ steps.submitRequest.output.status }}
+      - title: Details URL
+        content: ${{ steps.submitRequest.output.details_url }}

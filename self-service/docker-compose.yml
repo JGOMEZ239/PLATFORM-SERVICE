@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: platform
+      POSTGRES_USER: platform
+      POSTGRES_PASSWORD: platform
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U platform -d platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql+psycopg2://platform:platform@db:5432/platform
+      API_KEY: change-me
+      ARTIFACTS_DIR: /app/artifacts
+    command: uvicorn application.api.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql+psycopg2://platform:platform@db:5432/platform
+      ARTIFACTS_DIR: /app/artifacts
+      POLL_INTERVAL_SECONDS: 2
+    command: python -m application.worker.main
+    depends_on:
+      db:
+        condition: service_healthy
