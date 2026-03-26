@@ -1,0 +1,66 @@
+app:
+  title: Portal
+  baseUrl: http://localhost:3000
+
+  packages: all
+
+  extensions:
+    - page:catalog:
+        config:
+          path: /
+
+organization:
+  name: My Company
+
+backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+  csp:
+    connect-src: ["'self'", 'http:', 'https:']
+  cors:
+    origin: http://localhost:3000
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+
+proxy:
+
+techdocs:
+  builder: local
+  generator:
+    runIn: docker
+  publisher:
+    type: local
+
+auth:
+  providers:
+    guest: {}
+
+scaffolder:
+
+catalog:
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template, Group, User]
+
+  locations:
+    - type: file
+      target: ../../templates/request-storage-bucket/template.yaml
+
+kubernetes:
+
+permission:
+  enabled: true
+
+platformRequests:
+  baseUrl: http://localhost:8000
+  auth:
+    headerName: x-api-key
+    secret: change-me
