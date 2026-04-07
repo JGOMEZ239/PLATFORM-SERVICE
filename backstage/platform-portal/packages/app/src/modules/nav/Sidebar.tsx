@@ -13,6 +13,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import { SidebarSearchModal } from '@backstage/plugin-search';
 import { UserSettingsSignInAvatar } from '@backstage/plugin-user-settings';
 import { NotificationsSidebarItem } from '@backstage/plugin-notifications';
+import StorageIcon from '@material-ui/icons/Storage';
 
 export const SidebarContent = NavContentBlueprint.make({
   params: {
@@ -34,6 +35,11 @@ export const SidebarContent = NavContentBlueprint.make({
           <SidebarGroup label="Menu" icon={<MenuIcon />}>
             {nav.take('page:catalog')}
             {nav.take('page:scaffolder')}
+            <SidebarItem
+              icon={StorageIcon}
+              to="/platform/requests"
+              text="Platform Requests"
+            />
             <SidebarDivider />
             <SidebarScrollWrapper>
               {nav.rest({ sortBy: 'title' })}

@@ -7,6 +7,7 @@ from domain.models.entities import RequestEvent, RequestStatus, ServiceRequest
 from domain.policies.validation import RequestValidator
 from domain.ports.repository import RequestRepositoryPort
 from shared.schemas import CreateRequestPayload
+from infrastructure.observability.metrics import REQUEST_COUNTER
 
 
 @dataclass
@@ -54,11 +55,21 @@ class RequestService:
             status_reason=reason,
             idempotency_key=idempotency_key,
         )
+
+
         record = self.repository.create_request(request)
+
+        REQUEST_COUNTER.labels(
+            status=record.status.value,
+            request_type=record.request_type,
+            team=record.team,
+            environment=record.environment,
+        ).inc()
 
         self._emit_lifecycle_events(request_id, payload, validation)
 
         return CreateRequestResult(record=record, created=True)
+        
 
     def _emit_lifecycle_events(self, request_id: str, payload: CreateRequestPayload, validation) -> None:
         events = [
