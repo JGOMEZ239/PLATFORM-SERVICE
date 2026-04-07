@@ -24,6 +24,8 @@ from shared.schemas import (
     RequestResponse,
 )
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 configure_logging()
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,8 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Platform Self Service API", version="1.0.0", lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)
+
 
 
 def require_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
