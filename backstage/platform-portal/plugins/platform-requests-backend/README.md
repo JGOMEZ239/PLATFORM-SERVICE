@@ -1,17 +1,60 @@
-# platform-requests
+# platform-requests-backend
 
-This plugin backend was templated using the Backstage CLI. You should replace this text with a description of your plugin backend.
+Plugin backend de Backstage que actúa como proxy HTTP entre el portal y la Platform Self-Service API. Permite al frontend consultar y crear solicitudes de recursos de infraestructura sin exponer directamente la API interna.
 
-## Installation
+## Arquitectura
 
-This plugin is installed via the `@internal/backstage-plugin-platform-requests-backend` package. To install it to your backend package, run the following command:
+```
+Backstage Frontend → platform-requests-backend (Express router) → PlatformApiClient → Platform API (:8000)
+```
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/api/platform-requests/health` | Health check del plugin |
+| `POST` | `/api/platform-requests/requests` | Crear solicitud (proxy a `POST /api/v1/requests`) |
+| `GET` | `/api/platform-requests/requests/:id` | Consultar solicitud por ID |
+| `GET` | `/api/platform-requests/requests/:id/events` | Obtener eventos de auditoría |
+
+### Headers soportados en `POST`
+
+| Header | Descripción |
+|--------|-------------|
+| `x-api-key` | Autenticación contra la Platform API |
+| `Idempotency-Key` | Previene creación duplicada (se reenvía al backend) |
+
+## Estructura
+
+```
+src/
+├── plugin.ts                    # Definición del plugin (ID: platform-requests)
+├── routes/
+│   └── requestsRouter.ts       # Express router con los 4 endpoints
+└── services/
+    └── PlatformApiClient.ts     # Cliente HTTP hacia la Platform API
+```
+
+## Configuración
+
+El plugin lee su configuración desde `app-config.yaml`:
+
+```yaml
+platformRequests:
+  baseUrl: http://localhost:8000       # URL de la Platform Self-Service API
+  auth:
+    headerName: x-api-key             # Header de autenticación
+    secret: change-me                  # API key
+```
+
+## Instalación
 
 ```bash
-# From your root directory
+# Desde la raíz del proyecto
 yarn --cwd packages/backend add @internal/backstage-plugin-platform-requests-backend
 ```
 
-Then add the plugin to your backend in `packages/backend/src/index.ts`:
+Registrar en `packages/backend/src/index.ts`:
 
 ```ts
 const backend = createBackend();
@@ -19,10 +62,9 @@ const backend = createBackend();
 backend.add(import('@internal/backstage-plugin-platform-requests-backend'));
 ```
 
-## Development
+## Desarrollo
 
-This plugin backend can be started in a standalone mode from directly in this
-package with `yarn start`. It is a limited setup that is most convenient when
-developing the plugin backend itself.
-
-If you want to run the entire project, including the frontend, run `yarn start` from the root directory.
+```bash
+cd plugins/platform-requests-backend
+yarn start    # Inicia el plugin en modo standalone
+```

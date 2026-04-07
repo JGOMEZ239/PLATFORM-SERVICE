@@ -1,52 +1,55 @@
-# example-backend
+# Platform Portal — Backend
 
-This package is an EXAMPLE of a Backstage backend.
+Backend Node.js del portal de plataforma. Orquesta todos los plugins de Backstage y sirve como punto de entrada del servidor.
 
-The main purpose of this package is to provide a test bed for Backstage plugins
-that have a backend part. Feel free to experiment locally or within your fork by
-adding dependencies and routes to this backend, to try things out.
+## Plugins registrados
 
-Our goal is to eventually amend the create-app flow of the CLI, such that a
-production ready version of a backend skeleton is made alongside the frontend
-app. Until then, feel free to experiment here!
+El backend registra los siguientes plugins en `src/index.ts`:
 
-## Development
+| Plugin | Descripción |
+|--------|-------------|
+| `app-backend` | Sirve el frontend de React |
+| `auth-backend` + guest provider | Autenticación (guest en desarrollo) |
+| `catalog-backend` | Catálogo de entidades y componentes |
+| `scaffolder-backend` | Motor de ejecución de templates |
+| `permission-backend` | Control de permisos (política allow-all) |
+| `platform-requests-backend` | Proxy HTTP hacia la Platform Self-Service API |
+| `scaffolder-backend-module-platform-requests` | Acción custom `company:platformRequest:create` |
+| `kubernetes-backend` | Integración con Kubernetes |
+| `notifications-backend` | Sistema de notificaciones |
+| `search-backend` | Motor de búsqueda |
+| `signals-backend` | Señales en tiempo real |
+| `techdocs-backend` | Documentación técnica |
 
-To run the example backend, first go to the project root and run
+## Desarrollo
 
 ```bash
+# Desde la raíz del proyecto
 yarn install
+
+# Iniciar solo el backend
+cd packages/backend
+yarn start
+# → http://localhost:7007
 ```
 
-You should only need to do this once.
+## Configuración
 
-After that, go to the `packages/backend` directory and run
+La configuración se lee desde `app-config.yaml` (desarrollo) y `app-config.production.yaml` (producción).
+
+- **Desarrollo:** SQLite in-memory, autenticación guest
+- **Producción:** PostgreSQL (variables `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`)
+
+Para sobreescribir configuración localmente, crear `app-config.local.yaml` en la raíz del proyecto.
+
+## Docker
 
 ```bash
-yarn start
+# Desde la raíz del proyecto
+yarn build-image
 ```
 
-If you want to override any configuration locally, for example adding any secrets,
-you can do so in `app-config.local.yaml`.
-
-The backend starts up on port 7007 per default.
-
-## Populating The Catalog
-
-If you want to use the catalog functionality, you need to add so called
-locations to the backend. These are places where the backend can find some
-entity descriptor data to consume and serve. For more information, see
-[Software Catalog Overview - Adding Components to the Catalog](https://backstage.io/docs/features/software-catalog/#adding-components-to-the-catalog).
-
-To get started quickly, this template already includes some statically configured example locations
-in `app-config.yaml` under `catalog.locations`. You can remove and replace these locations as you
-like, and also override them for local development in `app-config.local.yaml`.
-
-## Authentication
-
-We chose [Passport](http://www.passportjs.org/) as authentication platform due
-to its comprehensive set of supported authentication
-[strategies](http://www.passportjs.org/packages/).
+Construye una imagen Docker con el backend compilado usando el `Dockerfile` incluido en este paquete.
 
 Read more about the
 [auth-backend](https://github.com/backstage/backstage/blob/master/plugins/auth-backend/README.md)

@@ -156,10 +156,12 @@ Soporta archivos `.env` vía `python-dotenv`.
 make up
 ```
 
-Esto levanta 3 servicios con Docker Compose:
+Esto levanta 5 servicios con Docker Compose:
 - **db**: PostgreSQL 16 en puerto 5432
 - **api**: FastAPI en puerto 8000 (`API_KEY=change-me`)
 - **worker**: Polling loop con intervalo de 2 segundos
+- **prometheus**: Scraping de métricas en puerto 9090
+- **grafana**: Dashboards en puerto 3001 (`admin/admin`)
 
 API disponible en `http://localhost:8000`.
 
@@ -269,6 +271,35 @@ PYTHONPATH=. pytest -q
 | httpx | 0.28.1 |
 | pytest | 8.3.4 |
 | python-dotenv | 1.0.1 |
+| prometheus-fastapi-instrumentator | 7.0.2 |
+| prometheus-client | 0.20.0 |
+
+## Observabilidad
+
+El stack de observabilidad incluido en `docker-compose.yml`:
+
+| Servicio | Puerto | Descripción |
+|----------|--------|-------------|
+| API (métricas) | 8000 `/metrics` | Instrumentación automática vía `prometheus-fastapi-instrumentator` |
+| Prometheus | 9090 | Scraping de métricas cada 5 segundos |
+| Grafana | 3001 | Dashboards (usuario: `admin`, contraseña: `admin`) |
+
+### Métricas custom
+
+- `platform_requests_total` — Counter con labels: `status`, `request_type`, `team`, `environment`
+
+### Logging estructurado
+
+Formato JSON con campos: `timestamp`, `level`, `logger`, `message`, `request_id`, `correlation_id`, `stage`, `status`.
+
+### Probes Kubernetes-ready
+
+- `/health` — Liveness probe (sin dependencias)
+- `/ready` — Readiness probe (valida conexión a PostgreSQL)
+
+### Audit trail
+
+Tabla `request_events` con 9 tipos de evento que registran el ciclo de vida completo de cada solicitud, consultable vía `GET /api/v1/requests/{id}/events` con paginación.
 
 
 ## Documentación adicional
